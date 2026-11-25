@@ -21,7 +21,6 @@ import {
 } from '../storage/medStorage';
 import {
   cancelarLembretes,
-  dispararNotificacaoTeste,
   reagendarTodosLembretes,
 } from '../utils/notificacoes';
 
@@ -45,16 +44,6 @@ export default function TelaConfiguracoes() {
       const atualizados = await reagendarTodosLembretes(lista, nova);
       await salvarMedicamentos(atualizados);
       setSalvando(false);
-    }
-  }
-
-  async function testarAlerta() {
-    const ok = await dispararNotificacaoTeste(config.somAtivo);
-    if (ok) {
-      Alert.alert(
-        'Teste enviado',
-        'A notificação de teste vai aparecer em 2 segundos.'
-      );
     }
   }
 
@@ -203,14 +192,6 @@ export default function TelaConfiguracoes() {
             })}
           </View>
 
-          <TouchableOpacity
-            style={styles.botaoTeste}
-            onPress={testarAlerta}
-            activeOpacity={0.85}
-          >
-            <Icone nome="som" tamanho={18} cor="#FFFFFF" />
-            <Text style={styles.textoBotaoTeste}>Testar notificação e som agora</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>

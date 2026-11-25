@@ -22,6 +22,7 @@ import {
   salvarMedicamentos,
 } from '../storage/medStorage';
 import { cancelarLembretes } from '../utils/notificacoes';
+import { tocarSomTomei } from '../utils/som';
 
 type RootStackParamList = {
   HomeTabs: undefined;
@@ -54,6 +55,10 @@ export default function TelaInicial() {
   }
 
   async function toggleTomado(id: string) {
+    const alvo = medicamentos.find((m) => m.id === id);
+    if (alvo && !alvo.tomado) {
+      tocarSomTomei();
+    }
     const atualizados = medicamentos.map((m) => {
       if (m.id === id) {
         return { ...m, tomado: !m.tomado };

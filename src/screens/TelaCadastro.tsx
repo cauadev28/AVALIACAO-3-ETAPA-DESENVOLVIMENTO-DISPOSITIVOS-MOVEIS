@@ -16,6 +16,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Icone from '../components/Icone';
 import { Medicamento } from '../types/Medicamento';
 import { carregarMedicamentos, salvarMedicamentos } from '../storage/medStorage';
+import { agendarLembretes, cancelarLembretes } from '../utils/notificacoes';
 
 type RootStackParamList = {
   HomeTabs: undefined;
@@ -116,6 +117,9 @@ export default function TelaCadastro() {
     const existentes = await carregarMedicamentos();
 
     if (editando) {
+      await cancelarLembretes(editando.notificacaoIds);
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim());
+
       const atualizados = existentes.map((m) => {
         if (m.id === editando.id) {
           return {
@@ -125,6 +129,7 @@ export default function TelaCadastro() {
             horario: horario.trim(),
             tipo,
             foto,
+            notificacaoIds: novosIds,
           };
         }
         return m;
@@ -132,6 +137,8 @@ export default function TelaCadastro() {
       await salvarMedicamentos(atualizados);
       Alert.alert('Sucesso', 'Medicamento atualizado!');
     } else {
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim());
+
       const novo: Medicamento = {
         id: Date.now().toString(),
         nome: nome.trim(),
@@ -141,6 +148,7 @@ export default function TelaCadastro() {
         tomado: false,
         foto,
         criadoEm: new Date().toLocaleDateString('pt-BR'),
+        notificacaoIds: novosIds,
       };
       existentes.push(novo);
       await salvarMedicamentos(existentes);

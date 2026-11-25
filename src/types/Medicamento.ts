@@ -7,4 +7,5 @@ export interface Medicamento {
   tomado: boolean;
   foto: string | null;
   criadoEm: string;
+  notificacaoIds?: string[];
 }

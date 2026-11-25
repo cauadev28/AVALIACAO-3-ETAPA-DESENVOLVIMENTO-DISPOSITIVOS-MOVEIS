@@ -9,6 +9,9 @@ import TelaDetalhes from './src/screens/TelaDetalhes';
 import TelaSobre from './src/screens/TelaSobre';
 import Icone from './src/components/Icone';
 import { Medicamento } from './src/types/Medicamento';
+import { configurarNotificacoes } from './src/utils/notificacoes';
+
+configurarNotificacoes();
 
 type RootStackParamList = {
   HomeTabs: undefined;

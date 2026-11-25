@@ -14,6 +14,7 @@ O CuidaMed ajuda no controle diário de medicamentos, evitando esquecimentos e c
 - Marcar e desmarcar medicamento como tomado
 - Tirar foto da caixa do remédio ou receita médica com a câmera
 - Selecionar imagem da galeria do dispositivo
+- Lembretes diários com notificação e alerta sonoro no horário cadastrado
 - Busca por nome ou dosagem
 - Filtros rápidos (Todos, Pendentes, Tomados)
 - Barra de progresso de doses tomadas
@@ -27,9 +28,9 @@ O CuidaMed ajuda no controle diário de medicamentos, evitando esquecimentos e c
 
 AsyncStorage - os dados são salvos em formato JSON no armazenamento local do dispositivo. Quando o app abre, ele recupera automaticamente os medicamentos que foram salvos anteriormente.
 
-## Recurso nativo implementado
+## Recursos nativos implementados
 
-Camera e galeria de imagens usando expo-image-picker. O app pede permissão ao usuário e trata o caso de permissão negada mostrando um alerta explicativo. É possível tirar foto direto pela câmera (da caixa do remédio, bula ou receita médica) ou escolher uma imagem que já está no celular.
+Camera e galeria de imagens usando expo-image-picker, além de notificações locais com alerta sonoro usando expo-notifications. O app pede permissão ao usuário e trata o caso de permissão negada mostrando um alerta explicativo. É possível tirar foto direto pela câmera (da caixa do remédio, bula ou receita médica), escolher uma imagem da galeria e receber lembretes diários nos horários cadastrados (formato HH:MM).
 
 ## Como instalar e rodar
 
@@ -46,6 +47,7 @@ Primeiro, tenha o Node.js e o Expo CLI instalados.
 - react-native (core do projeto)
 - expo (plataforma de desenvolvimento)
 - expo-image-picker (câmera e galeria)
+- expo-notifications (notificações locais e alerta sonoro)
 - @react-native-async-storage/async-storage (persistência local)
 - react-native-svg (ícones vetoriais em SVG)
 - @react-navigation/native (navegação)

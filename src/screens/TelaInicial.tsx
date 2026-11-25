@@ -16,6 +16,7 @@ import ListaVazia from '../components/ListaVazia';
 import Icone from '../components/Icone';
 import { Medicamento } from '../types/Medicamento';
 import { carregarMedicamentos, salvarMedicamentos } from '../storage/medStorage';
+import { cancelarLembretes } from '../utils/notificacoes';
 
 type RootStackParamList = {
   HomeTabs: undefined;
@@ -69,6 +70,8 @@ export default function TelaInicial() {
   }
 
   async function excluirMedicamento(id: string) {
+    const alvo = medicamentos.find((m) => m.id === id);
+    await cancelarLembretes(alvo?.notificacaoIds);
     const filtrados = medicamentos.filter((m) => m.id !== id);
     setMedicamentos(filtrados);
     await salvarMedicamentos(filtrados);

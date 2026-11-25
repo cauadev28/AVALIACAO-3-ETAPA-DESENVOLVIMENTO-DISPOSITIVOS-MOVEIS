@@ -65,7 +65,7 @@ export default function TelaSobre() {
           O CuidaMed foi criado como projeto final da disciplina de Desenvolvimento para Dispositivos Móveis. Ele ajuda no controle diário de medicamentos, evitando esquecimentos e confusões com dosagens.
         </Text>
         <Text style={styles.infoTexto}>
-          Tecnologias utilizadas: React Native, Expo, TypeScript, AsyncStorage e Expo Image Picker.
+          Tecnologias utilizadas: React Native, Expo, TypeScript, AsyncStorage, Expo Image Picker e Expo Notifications.
         </Text>
         <Text style={styles.versao}>Versão 1.0.0</Text>
       </View>

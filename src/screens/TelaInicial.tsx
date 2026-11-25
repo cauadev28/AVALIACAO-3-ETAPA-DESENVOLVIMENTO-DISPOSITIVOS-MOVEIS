@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Alert,
   StatusBar,
   TextInput,
+  Modal,
+  Animated,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,7 +23,7 @@ import {
   carregarMedicamentos,
   salvarMedicamentos,
 } from '../storage/medStorage';
-import { cancelarLembretes } from '../utils/notificacoes';
+import { cancelarLembretes, verificarPerdidos } from '../utils/notificacoes';
 import { tocarSomTomei } from '../utils/som';
 
 type RootStackParamList = {
@@ -32,11 +34,21 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const FRASES_BRAVA = [
+  'Ei! Você esqueceu de tomar',
+  'Tá me ignorando? Faltou tomar',
+  'Sem desculpas! Perdeu o horário de',
+  'Esqueceu de novo?! Era pra ter tomado',
+  'O remédio ficou esperando por você:',
+];
+
 export default function TelaInicial() {
   const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
   const [config, setConfig] = useState<ConfiguracaoApp>(CONFIG_PADRAO);
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<'todos' | 'pendentes' | 'tomados'>('todos');
+  const [perdidoAtual, setPerdidoAtual] = useState<Medicamento | null>(null);
+  const shakeAnim = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation<NavigationProp>();
 
   useFocusEffect(
@@ -52,6 +64,50 @@ export default function TelaInicial() {
     ]);
     setMedicamentos(dados);
     setConfig(cfg);
+    checarPerdidos(dados);
+  }
+
+  function checarPerdidos(lista: Medicamento[]) {
+    const perdidos = verificarPerdidos(lista);
+    if (perdidos.length > 0) {
+      setPerdidoAtual(perdidos[0]);
+      iniciarShake();
+    }
+  }
+
+  function iniciarShake() {
+    shakeAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 6, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -6, duration: 60, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
+    ]).start();
+  }
+
+  async function confirmarTomeiPerdido() {
+    if (!perdidoAtual) return;
+    tocarSomTomei();
+    const atualizados = medicamentos.map((m) =>
+      m.id === perdidoAtual.id ? { ...m, tomado: true } : m
+    );
+    setMedicamentos(atualizados);
+    await salvarMedicamentos(atualizados);
+    const proximos = verificarPerdidos(atualizados);
+    setPerdidoAtual(proximos.length > 0 ? proximos[0] : null);
+    if (proximos.length > 0) iniciarShake();
+  }
+
+  function ignorarPerdido() {
+    if (!perdidoAtual) return;
+    const proximos = medicamentos.filter(
+      (m) => !m.tomado && m.id !== perdidoAtual.id && verificarPerdidos([m]).length > 0
+    );
+    setPerdidoAtual(proximos.length > 0 ? proximos[0] : null);
+    if (proximos.length > 0) iniciarShake();
   }
 
   async function toggleTomado(id: string) {
@@ -111,6 +167,10 @@ export default function TelaInicial() {
   const tomados = medicamentos.filter((m) => m.tomado).length;
   const percentual = total > 0 ? Math.round((tomados / total) * 100) : 0;
   const proximoPendente = medicamentos.find((m) => !m.tomado);
+
+  const fraseBrava = perdidoAtual
+    ? FRASES_BRAVA[perdidoAtual.nome.length % FRASES_BRAVA.length]
+    : '';
 
   return (
     <View style={styles.container}>
@@ -227,6 +287,56 @@ export default function TelaInicial() {
       >
         <Icone nome="mais" tamanho={28} cor="#FFFFFF" />
       </TouchableOpacity>
+
+      <Modal
+        visible={perdidoAtual !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={ignorarPerdido}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View
+            style={[styles.modalPerdido, { transform: [{ translateX: shakeAnim }] }]}
+          >
+            <View style={styles.modalIconeArea}>
+              <View style={styles.modalIconeCirculo}>
+                <Icone nome="alerta" tamanho={36} cor="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.modalBravo}>ESQUECEU DE NOVO?!</Text>
+            <Text style={styles.modalFrase}>{fraseBrava}</Text>
+            <Text style={styles.modalNome}>{perdidoAtual?.nome}</Text>
+            <Text style={styles.modalDosagem}>{perdidoAtual?.dosagem}</Text>
+            <Text style={styles.modalHorario}>
+              Horário: {perdidoAtual?.horario}
+            </Text>
+
+            <Text style={styles.modalPergunta}>
+              Vai tomar agora ou vai continuar ignorando?
+            </Text>
+
+            <View style={styles.modalBotoes}>
+              <TouchableOpacity
+                style={styles.botaoNaoVou}
+                onPress={ignorarPerdido}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.botaoNaoVouTexto}>Não vou tomar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.botaoVouTomar}
+                onPress={confirmarTomeiPerdido}
+                activeOpacity={0.85}
+              >
+                <Icone nome="check" tamanho={18} cor="#FFFFFF" />
+                <Text style={styles.botaoVouTomarTexto}>Tomei agora!</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -428,5 +538,116 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(76, 5, 25, 0.75)',
+    justifyContent: 'flex-end',
+    padding: 16,
+    paddingBottom: 32,
+  },
+  modalPerdido: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 28,
+    borderBottomWidth: 6,
+    borderBottomColor: '#881337',
+    elevation: 20,
+    shadowColor: '#881337',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+  },
+  modalIconeArea: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalIconeCirculo: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#E11D48',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 5,
+    borderBottomColor: '#881337',
+  },
+  modalBravo: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#881337',
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  modalFrase: {
+    fontSize: 15,
+    color: '#78716C',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalNome: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1C1917',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  modalDosagem: {
+    fontSize: 14,
+    color: '#9F1239',
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalHorario: {
+    fontSize: 13,
+    color: '#78716C',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalPergunta: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#44403C',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalBotoes: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  botaoNaoVou: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    backgroundColor: '#FFF1F2',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    borderBottomWidth: 3,
+    borderBottomColor: '#FDA4AF',
+  },
+  botaoNaoVouTexto: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#78716C',
+  },
+  botaoVouTomar: {
+    flex: 2,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
+    backgroundColor: '#E11D48',
+    borderBottomWidth: 4,
+    borderBottomColor: '#881337',
+  },
+  botaoVouTomarTexto: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
 });

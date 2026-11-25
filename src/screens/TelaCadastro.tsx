@@ -14,6 +14,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Icone from '../components/Icone';
+import SeletorHorario from '../components/SeletorHorario';
 import { Medicamento } from '../types/Medicamento';
 import {
   carregarConfiguracao,
@@ -37,7 +38,7 @@ export default function TelaCadastro() {
 
   const [nome, setNome] = useState('');
   const [dosagem, setDosagem] = useState('');
-  const [horario, setHorario] = useState('');
+  const [horariosLista, setHorariosLista] = useState<string[]>([]);
   const [tipo, setTipo] = useState<'continuo' | 'temporario' | 'urgente'>('continuo');
   const [observacao, setObservacao] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
@@ -46,7 +47,11 @@ export default function TelaCadastro() {
     if (editando) {
       setNome(editando.nome);
       setDosagem(editando.dosagem);
-      setHorario(editando.horario);
+      const horariosExistentes = editando.horario
+        .split(/\s+e\s+/)
+        .map((h) => h.trim())
+        .filter((h) => /^\d{2}:\d{2}$/.test(h));
+      setHorariosLista(horariosExistentes);
       setTipo(editando.tipo);
       setObservacao(editando.observacao || '');
       setFoto(editando.foto);
@@ -110,8 +115,8 @@ export default function TelaCadastro() {
       Alert.alert('Campo obrigatório', 'Informe a dosagem (ex: 500mg - 1 comprimido).');
       return false;
     }
-    if (!horario.trim()) {
-      Alert.alert('Campo obrigatório', 'Informe o horário de uso (ex: 08:00).');
+    if (horariosLista.length === 0) {
+      Alert.alert('Campo obrigatório', 'Adicione pelo menos um horário de uso.');
       return false;
     }
     return true;
@@ -120,12 +125,13 @@ export default function TelaCadastro() {
   async function salvar() {
     if (!validarCampos()) return;
 
+    const horarioTexto = horariosLista.join(' e ');
     const existentes = await carregarMedicamentos();
     const config = await carregarConfiguracao();
 
     if (editando) {
       await cancelarLembretes(editando.notificacaoIds);
-      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim(), config);
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horarioTexto, config);
 
       const atualizados = existentes.map((m) => {
         if (m.id === editando.id) {
@@ -133,7 +139,7 @@ export default function TelaCadastro() {
             ...m,
             nome: nome.trim(),
             dosagem: dosagem.trim(),
-            horario: horario.trim(),
+            horario: horarioTexto,
             tipo,
             observacao: observacao.trim(),
             foto,
@@ -145,13 +151,13 @@ export default function TelaCadastro() {
       await salvarMedicamentos(atualizados);
       Alert.alert('Sucesso', 'Medicamento atualizado!');
     } else {
-      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim(), config);
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horarioTexto, config);
 
       const novo: Medicamento = {
         id: Date.now().toString(),
         nome: nome.trim(),
         dosagem: dosagem.trim(),
-        horario: horario.trim(),
+        horario: horarioTexto,
         tipo,
         tomado: false,
         observacao: observacao.trim(),
@@ -206,28 +212,10 @@ export default function TelaCadastro() {
           />
 
           <Text style={styles.label}>Horário de uso *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: 08:00 e 20:00"
-            placeholderTextColor="#D4A0A0"
-            value={horario}
-            onChangeText={setHorario}
-            maxLength={30}
+          <SeletorHorario
+            horarios={horariosLista}
+            onChange={setHorariosLista}
           />
-          <View style={styles.atalhosRow}>
-            {['08:00', '12:00', '20:00', '08:00 e 20:00'].map((h) => (
-              <TouchableOpacity
-                key={h}
-                style={[styles.atalhoChip, horario === h && styles.atalhoChipAtivo]}
-                onPress={() => setHorario(h)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.atalhoTexto, horario === h && styles.atalhoTextoAtivo]}>
-                  {h}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <Text style={styles.label}>Observações (opcional)</Text>
           <TextInput
@@ -360,32 +348,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FECDD3',
     borderBottomWidth: 3,
-  },
-  atalhosRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  atalhoChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#FFF1F2',
-    borderWidth: 1,
-    borderColor: '#FECDD3',
-  },
-  atalhoChipAtivo: {
-    backgroundColor: '#E11D48',
-    borderColor: '#BE123C',
-  },
-  atalhoTexto: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#9F1239',
-  },
-  atalhoTextoAtivo: {
-    color: '#FFFFFF',
   },
   tipoContainer: {
     flexDirection: 'row',

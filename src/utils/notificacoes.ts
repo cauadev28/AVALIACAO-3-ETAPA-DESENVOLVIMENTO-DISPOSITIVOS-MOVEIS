@@ -8,16 +8,19 @@ export function configurarNotificacoes() {
       shouldShowBanner: true,
       shouldShowList: true,
       shouldPlaySound: true,
-      shouldSetBadge: false,
+      shouldSetBadge: true,
     }),
   });
 
   if (Platform.OS === 'android') {
     Notifications.setNotificationChannelAsync('lembretes', {
       name: 'Lembretes de medicamentos',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: Notifications.AndroidImportance.MAX,
       sound: 'default',
-      vibrationPattern: [0, 250, 250, 250],
+      vibrationPattern: [0, 500, 300, 500, 300, 500],
+      enableVibrate: true,
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      bypassDnd: true,
     });
 
     Notifications.setNotificationChannelAsync('lembretes_silencioso', {
@@ -51,6 +54,14 @@ function aplicarAntecedencia(hour: number, minute: number, antecedencia: number)
   return {
     hour: Math.floor(totalMinutos / 60) % 24,
     minute: totalMinutos % 60,
+  };
+}
+
+function somarMinutos(hour: number, minute: number, extra: number) {
+  let total = hour * 60 + minute + extra;
+  return {
+    hour: Math.floor(total / 60) % 24,
+    minute: total % 60,
   };
 }
 
@@ -92,11 +103,12 @@ export async function agendarLembretes(
     const canal = somAtivo ? 'lembretes' : 'lembretes_silencioso';
 
     const ids: string[] = [];
+
     for (const h of horarios) {
       const ajustado = aplicarAntecedencia(h.hour, h.minute, antecedencia);
       const aviso = antecedencia > 0 ? ` (em ${antecedencia} min)` : '';
 
-      const id = await Notifications.scheduleNotificationAsync({
+      const id1 = await Notifications.scheduleNotificationAsync({
         content: {
           title: `Hora do medicamento${aviso}`,
           body: `${nome} - ${dosagem}`,
@@ -109,7 +121,39 @@ export async function agendarLembretes(
           channelId: Platform.OS === 'android' ? canal : undefined,
         },
       });
-      ids.push(id);
+      ids.push(id1);
+
+      const seg = somarMinutos(ajustado.hour, ajustado.minute, 5);
+      const id2 = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Lembrete - medicamento pendente',
+          body: `Você ainda não tomou ${nome}! Não esqueça.`,
+          sound: somAtivo,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: seg.hour,
+          minute: seg.minute,
+          channelId: Platform.OS === 'android' ? canal : undefined,
+        },
+      });
+      ids.push(id2);
+
+      const ter = somarMinutos(ajustado.hour, ajustado.minute, 10);
+      const id3 = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Último aviso - tome seu medicamento!',
+          body: `${nome} está esperando há 10 minutos. Tome agora!`,
+          sound: somAtivo,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: ter.hour,
+          minute: ter.minute,
+          channelId: Platform.OS === 'android' ? canal : undefined,
+        },
+      });
+      ids.push(id3);
     }
 
     return ids;
@@ -180,4 +224,22 @@ export async function dispararNotificacaoTeste(somAtivo: boolean): Promise<boole
     console.error('Erro ao testar notificação:', erro);
     return false;
   }
+}
+
+export function verificarPerdidos(medicamentos: Medicamento[]): Medicamento[] {
+  const agora = new Date();
+  const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+  const regex = /\b([01]?\d|2[0-3]):([0-5]\d)\b/g;
+
+  return medicamentos.filter((med) => {
+    if (med.tomado) return false;
+
+    let match: RegExpExecArray | null;
+    regex.lastIndex = 0;
+    while ((match = regex.exec(med.horario)) !== null) {
+      const horaMed = Number(match[1]) * 60 + Number(match[2]);
+      if (horaAtual > horaMed) return true;
+    }
+    return false;
+  });
 }

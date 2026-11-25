@@ -15,6 +15,8 @@ O CuidaMed ajuda no controle diário de medicamentos, evitando esquecimentos e c
 - Tirar foto da caixa do remédio ou receita médica com a câmera
 - Selecionar imagem da galeria do dispositivo
 - Lembretes diários com notificação e alerta sonoro no horário cadastrado
+- Card de próxima dose em destaque na tela inicial
+- Tela de configurações (perfil do paciente, som, antecedência do aviso, teste de alerta e reiniciar doses do dia)
 - Busca por nome ou dosagem
 - Filtros rápidos (Todos, Pendentes, Tomados)
 - Barra de progresso de doses tomadas

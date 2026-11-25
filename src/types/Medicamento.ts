@@ -7,5 +7,13 @@ export interface Medicamento {
   tomado: boolean;
   foto: string | null;
   criadoEm: string;
+  observacao?: string;
   notificacaoIds?: string[];
+}
+
+export interface ConfiguracaoApp {
+  nomePaciente: string;
+  notificacoesAtivas: boolean;
+  somAtivo: boolean;
+  antecedenciaMinutos: 0 | 5 | 15;
 }

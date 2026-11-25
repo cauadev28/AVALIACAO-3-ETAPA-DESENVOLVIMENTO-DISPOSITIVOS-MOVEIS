@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import TelaInicial from './src/screens/TelaInicial';
 import TelaCadastro from './src/screens/TelaCadastro';
 import TelaDetalhes from './src/screens/TelaDetalhes';
+import TelaConfiguracoes from './src/screens/TelaConfiguracoes';
 import TelaSobre from './src/screens/TelaSobre';
 import Icone from './src/components/Icone';
 import { Medicamento } from './src/types/Medicamento';
@@ -58,7 +59,16 @@ function HomeTabs() {
         }}
       />
       <Tab.Screen
-        name="Sobre"
+        name="Configurações"
+        component={TelaConfiguracoes}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Icone nome="config" tamanho={22} cor={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Resumo"
         component={TelaSobre}
         options={{
           tabBarIcon: ({ color }) => (

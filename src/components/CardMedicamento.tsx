@@ -66,7 +66,18 @@ export default function CardMedicamento({ medicamento, onPress, onToggle, onExcl
         <View style={styles.horarioLinha}>
           <Icone nome="relogio" tamanho={14} cor="#9F1239" />
           <Text style={styles.horarioTexto}>{medicamento.horario}</Text>
+          {medicamento.notificacaoIds && medicamento.notificacaoIds.length > 0 && (
+            <View style={styles.alertaMini}>
+              <Icone nome="sino" tamanho={12} cor="#E11D48" />
+            </View>
+          )}
         </View>
+
+        {medicamento.observacao ? (
+          <Text style={styles.observacao} numberOfLines={2}>
+            {medicamento.observacao}
+          </Text>
+        ) : null}
 
         {medicamento.foto && (
           <Image source={{ uri: medicamento.foto }} style={styles.miniatura} />
@@ -201,6 +212,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9F1239',
     fontWeight: '600',
+  },
+  alertaMini: {
+    marginLeft: 4,
+    backgroundColor: '#FFF1F2',
+    padding: 4,
+    borderRadius: 8,
+  },
+  observacao: {
+    fontSize: 13,
+    color: '#57534E',
+    marginBottom: 10,
+    fontStyle: 'italic',
   },
   miniatura: {
     width: '100%',

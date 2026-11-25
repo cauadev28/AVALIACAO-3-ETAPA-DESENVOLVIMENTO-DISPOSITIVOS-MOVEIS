@@ -17,7 +17,12 @@ export type NomeIcone =
   | 'sobre'
   | 'gota'
   | 'termometro'
-  | 'vazio';
+  | 'vazio'
+  | 'config'
+  | 'sino'
+  | 'som'
+  | 'usuario'
+  | 'atualizar';
 
 interface IconeProps {
   nome: NomeIcone;
@@ -190,6 +195,91 @@ export default function Icone({ nome, tamanho = 22, cor = '#1E293B' }: IconeProp
             strokeWidth="1.5"
           />
           <Line x1="27" y1="34" x2="53" y2="34" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" />
+        </Svg>
+      );
+
+    case 'config':
+      return (
+        <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="12" r="3" stroke={cor} strokeWidth="2" />
+          <Path
+            d="M19.4 15A1.65 1.65 0 0 0 19.73 16.82L19.79 16.88A2 2 0 1 1 16.96 19.71L16.9 19.65A1.65 1.65 0 0 0 15.08 19.32A1.65 1.65 0 0 0 14 20.85V21A2 2 0 1 1 10 21V20.91A1.65 1.65 0 0 0 8.92 19.4A1.65 1.65 0 0 0 7.1 19.73L7.04 19.79A2 2 0 1 1 4.21 16.96L4.27 16.9A1.65 1.65 0 0 0 4.6 15.08A1.65 1.65 0 0 0 3.07 14H3A2 2 0 1 1 3 10H3.09A1.65 1.65 0 0 0 4.6 8.92A1.65 1.65 0 0 0 4.27 7.1L4.21 7.04A2 2 0 1 1 7.04 4.21L7.1 4.27A1.65 1.65 0 0 0 8.92 4.6H9A1.65 1.65 0 0 0 10 3.09V3A2 2 0 1 1 14 3V3.09A1.65 1.65 0 0 0 15.08 4.6A1.65 1.65 0 0 0 16.9 4.27L16.96 4.21A2 2 0 1 1 19.79 7.04L19.73 7.1A1.65 1.65 0 0 0 19.4 8.92V9A1.65 1.65 0 0 0 20.91 10H21A2 2 0 1 1 21 14H20.91A1.65 1.65 0 0 0 19.4 15Z"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+
+    case 'sino':
+      return (
+        <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M18 8A6 6 0 0 0 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M13.73 21A2 2 0 0 1 10.27 21"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      );
+
+    case 'som':
+      return (
+        <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
+          <Path
+            d="M11 5L6 9H2V15H6L11 19V5Z"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          <Path
+            d="M15.54 8.46A5 5 0 0 1 15.54 15.54"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <Path
+            d="M19.07 4.93A10 10 0 0 1 19.07 19.07"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+
+    case 'usuario':
+      return (
+        <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
+          <Circle cx="12" cy="8" r="4" stroke={cor} strokeWidth="2" />
+          <Path
+            d="M4 20C4 16.6863 7.58172 14 12 14C16.4183 14 20 16.6863 20 20"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </Svg>
+      );
+
+    case 'atualizar':
+      return (
+        <Svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
+          <Path d="M21 4V10H15" stroke={cor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <Path
+            d="M20.49 15A9 9 0 1 1 18.36 5.64L21 10"
+            stroke={cor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </Svg>
       );
   }

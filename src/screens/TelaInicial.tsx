@@ -14,8 +14,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CardMedicamento from '../components/CardMedicamento';
 import ListaVazia from '../components/ListaVazia';
 import Icone from '../components/Icone';
-import { Medicamento } from '../types/Medicamento';
-import { carregarMedicamentos, salvarMedicamentos } from '../storage/medStorage';
+import { ConfiguracaoApp, Medicamento } from '../types/Medicamento';
+import {
+  CONFIG_PADRAO,
+  carregarConfiguracao,
+  carregarMedicamentos,
+  salvarMedicamentos,
+} from '../storage/medStorage';
 import { cancelarLembretes } from '../utils/notificacoes';
 
 type RootStackParamList = {
@@ -28,6 +33,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function TelaInicial() {
   const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
+  const [config, setConfig] = useState<ConfiguracaoApp>(CONFIG_PADRAO);
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<'todos' | 'pendentes' | 'tomados'>('todos');
   const navigation = useNavigation<NavigationProp>();
@@ -39,8 +45,12 @@ export default function TelaInicial() {
   );
 
   async function buscarMedicamentos() {
-    const dados = await carregarMedicamentos();
+    const [dados, cfg] = await Promise.all([
+      carregarMedicamentos(),
+      carregarConfiguracao(),
+    ]);
     setMedicamentos(dados);
+    setConfig(cfg);
   }
 
   async function toggleTomado(id: string) {
@@ -95,6 +105,7 @@ export default function TelaInicial() {
   const total = medicamentos.length;
   const tomados = medicamentos.filter((m) => m.tomado).length;
   const percentual = total > 0 ? Math.round((tomados / total) * 100) : 0;
+  const proximoPendente = medicamentos.find((m) => !m.tomado);
 
   return (
     <View style={styles.container}>
@@ -111,7 +122,9 @@ export default function TelaInicial() {
           </View>
         </View>
 
-        <Text style={styles.headerTitulo}>Meus Medicamentos</Text>
+        <Text style={styles.headerTitulo}>
+          {config.nomePaciente ? `Olá, ${config.nomePaciente}` : 'Meus Medicamentos'}
+        </Text>
         <Text style={styles.headerSubtitulo}>
           {tomados} de {total} doses tomadas hoje
         </Text>
@@ -120,6 +133,28 @@ export default function TelaInicial() {
           <View style={[styles.barraPreenchida, { width: `${percentual}%` }]} />
         </View>
       </View>
+
+      {proximoPendente && (
+        <View style={styles.proximaBox}>
+          <View style={styles.proximaEsq}>
+            <View style={styles.proximaTag}>
+              <Icone nome="sino" tamanho={13} cor="#E11D48" />
+              <Text style={styles.proximaTagTexto}>PRÓXIMA DOSE</Text>
+            </View>
+            <Text style={styles.proximaNome} numberOfLines={1}>
+              {proximoPendente.nome} • {proximoPendente.horario}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.proximaBotao}
+            onPress={() => toggleTomado(proximoPendente.id)}
+            activeOpacity={0.85}
+          >
+            <Icone nome="check" tamanho={16} cor="#FFFFFF" />
+            <Text style={styles.proximaBotaoTexto}>Tomei</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.controles}>
         <View style={styles.buscaBox}>
@@ -262,6 +297,58 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#FB7185',
     borderRadius: 6,
+  },
+  proximaBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    borderBottomWidth: 4,
+    borderBottomColor: '#FDA4AF',
+    gap: 10,
+  },
+  proximaEsq: {
+    flex: 1,
+  },
+  proximaTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 2,
+  },
+  proximaTagTexto: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#E11D48',
+    letterSpacing: 1,
+  },
+  proximaNome: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1C1917',
+  },
+  proximaBotao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#E11D48',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderBottomWidth: 3,
+    borderBottomColor: '#881337',
+  },
+  proximaBotaoTexto: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
   controles: {
     paddingHorizontal: 16,

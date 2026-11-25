@@ -15,7 +15,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Icone from '../components/Icone';
 import { Medicamento } from '../types/Medicamento';
-import { carregarMedicamentos, salvarMedicamentos } from '../storage/medStorage';
+import {
+  carregarConfiguracao,
+  carregarMedicamentos,
+  salvarMedicamentos,
+} from '../storage/medStorage';
 import { agendarLembretes, cancelarLembretes } from '../utils/notificacoes';
 
 type RootStackParamList = {
@@ -35,6 +39,7 @@ export default function TelaCadastro() {
   const [dosagem, setDosagem] = useState('');
   const [horario, setHorario] = useState('');
   const [tipo, setTipo] = useState<'continuo' | 'temporario' | 'urgente'>('continuo');
+  const [observacao, setObservacao] = useState('');
   const [foto, setFoto] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +48,7 @@ export default function TelaCadastro() {
       setDosagem(editando.dosagem);
       setHorario(editando.horario);
       setTipo(editando.tipo);
+      setObservacao(editando.observacao || '');
       setFoto(editando.foto);
     }
   }, [editando]);
@@ -115,10 +121,11 @@ export default function TelaCadastro() {
     if (!validarCampos()) return;
 
     const existentes = await carregarMedicamentos();
+    const config = await carregarConfiguracao();
 
     if (editando) {
       await cancelarLembretes(editando.notificacaoIds);
-      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim());
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim(), config);
 
       const atualizados = existentes.map((m) => {
         if (m.id === editando.id) {
@@ -128,6 +135,7 @@ export default function TelaCadastro() {
             dosagem: dosagem.trim(),
             horario: horario.trim(),
             tipo,
+            observacao: observacao.trim(),
             foto,
             notificacaoIds: novosIds,
           };
@@ -137,7 +145,7 @@ export default function TelaCadastro() {
       await salvarMedicamentos(atualizados);
       Alert.alert('Sucesso', 'Medicamento atualizado!');
     } else {
-      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim());
+      const novosIds = await agendarLembretes(nome.trim(), dosagem.trim(), horario.trim(), config);
 
       const novo: Medicamento = {
         id: Date.now().toString(),
@@ -146,6 +154,7 @@ export default function TelaCadastro() {
         horario: horario.trim(),
         tipo,
         tomado: false,
+        observacao: observacao.trim(),
         foto,
         criadoEm: new Date().toLocaleDateString('pt-BR'),
         notificacaoIds: novosIds,
@@ -204,6 +213,30 @@ export default function TelaCadastro() {
             value={horario}
             onChangeText={setHorario}
             maxLength={30}
+          />
+          <View style={styles.atalhosRow}>
+            {['08:00', '12:00', '20:00', '08:00 e 20:00'].map((h) => (
+              <TouchableOpacity
+                key={h}
+                style={[styles.atalhoChip, horario === h && styles.atalhoChipAtivo]}
+                onPress={() => setHorario(h)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.atalhoTexto, horario === h && styles.atalhoTextoAtivo]}>
+                  {h}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Observações (opcional)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Tomar após o almoço"
+            placeholderTextColor="#D4A0A0"
+            value={observacao}
+            onChangeText={setObservacao}
+            maxLength={80}
           />
 
           <Text style={styles.label}>Tipo de uso</Text>
@@ -327,6 +360,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FECDD3',
     borderBottomWidth: 3,
+  },
+  atalhosRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  atalhoChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+  },
+  atalhoChipAtivo: {
+    backgroundColor: '#E11D48',
+    borderColor: '#BE123C',
+  },
+  atalhoTexto: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9F1239',
+  },
+  atalhoTextoAtivo: {
+    color: '#FFFFFF',
   },
   tipoContainer: {
     flexDirection: 'row',

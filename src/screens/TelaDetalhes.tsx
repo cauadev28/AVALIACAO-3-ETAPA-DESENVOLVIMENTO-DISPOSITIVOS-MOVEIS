@@ -88,6 +88,26 @@ export default function TelaDetalhes() {
         <Text style={styles.labelSecao}>Dosagem</Text>
         <Text style={styles.descricao}>{med.dosagem}</Text>
 
+        {med.observacao ? (
+          <>
+            <Text style={styles.labelSecao}>Observações</Text>
+            <Text style={styles.descricao}>{med.observacao}</Text>
+          </>
+        ) : null}
+
+        <View style={styles.alertaStatus}>
+          <Icone
+            nome={med.notificacaoIds && med.notificacaoIds.length > 0 ? 'som' : 'sino'}
+            tamanho={16}
+            cor={med.notificacaoIds && med.notificacaoIds.length > 0 ? '#059669' : '#78716C'}
+          />
+          <Text style={styles.alertaStatusTexto}>
+            {med.notificacaoIds && med.notificacaoIds.length > 0
+              ? `${med.notificacaoIds.length} lembrete(s) com notificação agendado(s)`
+              : 'Sem lembrete automático para este horário'}
+          </Text>
+        </View>
+
         <View style={styles.datasRow}>
           <View style={styles.dataBox}>
             <View style={styles.dataHeader}>
@@ -188,6 +208,24 @@ const styles = StyleSheet.create({
     color: '#44403C',
     lineHeight: 24,
     marginBottom: 10,
+  },
+  alertaStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFF7F8',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    marginBottom: 12,
+  },
+  alertaStatusTexto: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#57534E',
+    flex: 1,
   },
   datasRow: {
     flexDirection: 'row',
